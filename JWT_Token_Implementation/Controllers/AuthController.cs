@@ -57,6 +57,19 @@ public class AuthController : ControllerBase
 
         return BadRequest("Invalid refresh token");
     }
+    // Example code to revoke a refresh token
+    [HttpPost]
+    public IActionResult Revoke([FromBody] RevokeRequest request)
+    {
+        if (_refreshTokens.ContainsKey(request.RefreshToken))
+        {
+            // Remove the refresh token to revoke it
+            _refreshTokens.Remove(request.RefreshToken);
+            return Ok("Token revoked successfully");
+        }
+
+        return BadRequest("Invalid refresh token");
+    }
     // Generating token based on user information
     private JwtSecurityToken GenerateAccessToken(string userName)
     {
