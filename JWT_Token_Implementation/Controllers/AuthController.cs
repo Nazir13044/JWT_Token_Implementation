@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,11 +17,13 @@ namespace JWT_Token_Implementation.Controllers;
 public class AuthController : ControllerBase
 {
     private IConfiguration _configuration;
+    private IMemoryCache _memoryCache;
     // dictionary to store refresh tokens 
     private static Dictionary<string, string> _refreshTokens = new Dictionary<string, string>();
-    public AuthController(IConfiguration configuration)
+    public AuthController(IConfiguration configuration, IMemoryCache memoryCache)
     {
         _configuration = configuration;
+        _memoryCache= memoryCache;
     }
     // login
     [HttpPost("Auth")]
@@ -39,9 +42,20 @@ public class AuthController : ControllerBase
             // Store the refresh token (in-memory for simplicity)
             _refreshTokens[refreshToken] = model.Username;
 
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(30))
+                .SetAbsoluteExpiration(TimeSpan.FromSeconds(300))
+                .SetPriority(CacheItemPriority.NeverRemove)
+                .SetSize(2048);
+
+            _memoryCache.Set(refreshToken, model.Username, cacheOptions);
+
             // return access token for user's use
-            return Ok(new { AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                            RefreshToken= refreshToken});
+            return Ok(new
+            {
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+                RefreshToken = refreshToken
+            });
 
         }
         // unauthorized user
@@ -50,10 +64,21 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public IActionResult Refresh([FromBody] Models.RefreshRequest request)
     {
-        if (_refreshTokens.TryGetValue(request.RefreshToken, out var userId))
+        //Dictionary
+        //if (_refreshTokens.TryGetValue(request.RefreshToken, out var userId))
+        //{
+        //    // Generate a new access token
+        //    var token = GenerateAccessToken(userId);
+
+        //    // Return the new access token to the client
+        //    return Ok(new { AccessToken = new JwtSecurityTokenHandler().WriteToken(token) });
+        //}
+
+        //In memeory cash
+        if (_memoryCache.TryGetValue(request.RefreshToken, out var userId))
         {
             // Generate a new access token
-            var token = GenerateAccessToken(userId);
+            var token = GenerateAccessToken(userId.ToString());
 
             // Return the new access token to the client
             return Ok(new { AccessToken = new JwtSecurityTokenHandler().WriteToken(token) });
