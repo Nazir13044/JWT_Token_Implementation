@@ -24,7 +24,6 @@ public class AuthController : ControllerBase
     }
     // login
     [HttpPost("Auth")]
-    [AllowAnonymous]
     public IActionResult Auth([FromBody] LoginModel model)
     {
         DataModels dt = new DataModels();
