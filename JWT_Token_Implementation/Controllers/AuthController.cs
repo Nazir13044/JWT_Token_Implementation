@@ -1,4 +1,5 @@
 ﻿using JWT_Token_Implementation.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,7 @@ public class AuthController : ControllerBase
     }
     // login
     [HttpPost("Auth")]
+    [AllowAnonymous]
     public IActionResult Auth([FromBody] LoginModel model)
     {
         // Check user credentials (in a real application, you'd authenticate against a database)
