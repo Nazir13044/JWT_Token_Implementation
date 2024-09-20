@@ -1,4 +1,5 @@
-﻿using JWT_Token_Implementation.Models;
+﻿using JWT_Token_Implementation.Dto;
+using JWT_Token_Implementation.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
@@ -26,8 +27,10 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public IActionResult Auth([FromBody] LoginModel model)
     {
+        DataModels dt = new DataModels();
+        var userInformation = dt.UserInformation();
         // Check user credentials (in a real application, you'd authenticate against a database)
-        if (model is { Username: "demo", Password: "password" })
+        if (userInformation.Any(x => x.Username == model.Username && x.Password == model.Password))
         {
             // generate token for user
             var token = GenerateAccessToken(model.Username);
